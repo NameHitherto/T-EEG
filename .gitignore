@@ -25,3 +25,11 @@ eeg/runs/
 Thumbs.db
 .vscode/
 .idea/
+
+# Agents
+.codex
+.claude
+.opencode
+.trae
+AGENTS.md
+CLAUDE.md
