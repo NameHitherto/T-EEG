@@ -1,5 +1,6 @@
 import { createStore } from "zustand/vanilla";
 
+import type { DatasetId } from "@/data/datasets";
 import type { FontKey } from "@/lib/fonts/registry";
 import type { ContentLayout, NavbarStyle, SidebarCollapsible, SidebarVariant } from "@/lib/preferences/layout";
 import { PREFERENCE_DEFAULTS } from "@/lib/preferences/preferences-config";
@@ -14,6 +15,7 @@ export type PreferencesState = {
   navbarStyle: NavbarStyle;
   sidebarVariant: SidebarVariant;
   sidebarCollapsible: SidebarCollapsible;
+  activeDataset: DatasetId;
   setThemeMode: (mode: ThemeMode) => void;
   setResolvedThemeMode: (mode: ResolvedThemeMode) => void;
   setThemePreset: (preset: ThemePreset) => void;
@@ -22,6 +24,7 @@ export type PreferencesState = {
   setNavbarStyle: (style: NavbarStyle) => void;
   setSidebarVariant: (variant: SidebarVariant) => void;
   setSidebarCollapsible: (mode: SidebarCollapsible) => void;
+  setActiveDataset: (dataset: DatasetId) => void;
   isSynced: boolean;
   setIsSynced: (val: boolean) => void;
 };
@@ -36,6 +39,7 @@ export const createPreferencesStore = (init?: Partial<PreferencesState>) =>
     navbarStyle: init?.navbarStyle ?? PREFERENCE_DEFAULTS.navbar_style,
     sidebarVariant: init?.sidebarVariant ?? PREFERENCE_DEFAULTS.sidebar_variant,
     sidebarCollapsible: init?.sidebarCollapsible ?? PREFERENCE_DEFAULTS.sidebar_collapsible,
+    activeDataset: init?.activeDataset ?? PREFERENCE_DEFAULTS.active_dataset,
     setThemeMode: (mode) => set({ themeMode: mode }),
     setResolvedThemeMode: (mode) => set({ resolvedThemeMode: mode }),
     setThemePreset: (preset) => set({ themePreset: preset }),
@@ -44,6 +48,7 @@ export const createPreferencesStore = (init?: Partial<PreferencesState>) =>
     setNavbarStyle: (style) => set({ navbarStyle: style }),
     setSidebarVariant: (variant) => set({ sidebarVariant: variant }),
     setSidebarCollapsible: (mode) => set({ sidebarCollapsible: mode }),
+    setActiveDataset: (dataset) => set({ activeDataset: dataset }),
     isSynced: init?.isSynced ?? false,
     setIsSynced: (val) => set({ isSynced: val }),
   }));

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { type StoreApi, useStore } from "zustand";
 
+import { DATASET_IDS } from "@/data/datasets";
 import { type FontKey, fontRegistry } from "@/lib/fonts/registry";
 import {
   CONTENT_LAYOUT_VALUES,
@@ -40,6 +41,7 @@ function readDomState(): Partial<PreferencesState> {
     navbarStyle: getSafeValue(root.getAttribute("data-navbar-style"), NAVBAR_STYLE_VALUES),
     sidebarVariant: getSafeValue(root.getAttribute("data-sidebar-variant"), SIDEBAR_VARIANT_VALUES),
     sidebarCollapsible: getSafeValue(root.getAttribute("data-sidebar-collapsible"), SIDEBAR_COLLAPSIBLE_VALUES),
+    activeDataset: getSafeValue(root.getAttribute("data-active-dataset"), DATASET_IDS),
   };
 }
 

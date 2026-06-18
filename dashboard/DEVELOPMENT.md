@@ -9,7 +9,7 @@
 ## 0. 先认清：什么是脚手架，什么是你的业务
 
 - **复用**：`src/components/ui/*`（shadcn 原子组件）、`src/lib/`（偏好系统、utils）、`dashboard/layout.tsx`（应用外壳：侧边栏 + 顶栏）、`src/stores/preferences`（主题/布局状态）。
-- **替换**：`dashboard/*` 下的页面内容、`src/navigation/sidebar/sidebar-items.ts`（导航）、`src/data/users.ts`（占位用户）、`src/config/app-config.ts`（应用名/标题）。
+- **替换**：`dashboard/*` 下的页面内容、`src/navigation/sidebar/sidebar-items.ts`（导航）、`src/data/datasets.ts`（数据集注册表，目前仅 SEED-V）、`src/config/app-config.ts`（应用名/标题）。
 - **新增**：你的业务页面、API 接入层、数据类型。
 
 > 删 Demo 时注意：`/dashboard` 重定向到 `/dashboard/default`（`next.config.mjs`）。要么保留 `default`，要么改这个 redirect。
@@ -75,7 +75,7 @@ export default async function Page() {
 
 ### 1.3 顶栏定制
 
-`dashboard/layout.tsx` 的 `<header>` 固定了：SidebarTrigger / 搜索 / LayoutControls / ThemeSwitcher / GitHub / AccountSwitcher。改这一处就能调整全局顶栏。`SearchDialog` / `AccountSwitcher` 都是 `_components/sidebar/` 下独立组件，可替换或删除。
+`dashboard/layout.tsx` 的 `<header>` 固定了：SidebarTrigger / 搜索 / LayoutControls / ThemeSwitcher / GitHub / DatasetSwitcher。改这一处就能调整全局顶栏。`SearchDialog` / `DatasetSwitcher` 都是 `_components/sidebar/` 下独立组件，可替换或删除。当前选中的数据集作为偏好 `active_dataset`（`client-cookie` 持久化）流转，既驱动顶栏/侧边栏的切换器，也被 `next.config.mjs` rewrites 读取来做 `/api` 请求的二次包装。
 
 ### 1.4 样式约定（避免和 Biome 打架）
 

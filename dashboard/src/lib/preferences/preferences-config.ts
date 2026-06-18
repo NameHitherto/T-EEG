@@ -11,6 +11,7 @@
  * Others are flexible and can use any persistence.
  */
 
+import type { DatasetId } from "@/data/datasets";
 import type { FontKey } from "@/lib/fonts/registry";
 
 import type { ContentLayout, NavbarStyle, SidebarCollapsible, SidebarVariant } from "./layout";
@@ -29,6 +30,7 @@ export type PreferenceValueMap = {
   navbar_style: NavbarStyle;
   sidebar_variant: SidebarVariant;
   sidebar_collapsible: SidebarCollapsible;
+  active_dataset: DatasetId;
 };
 
 export type PreferenceKey = keyof PreferenceValueMap;
@@ -73,6 +75,7 @@ export const PREFERENCE_DEFAULTS: PreferenceValueMap = {
   navbar_style: "sticky",
   sidebar_variant: "inset",
   sidebar_collapsible: "icon",
+  active_dataset: "seed-v",
 };
 
 /**
@@ -87,4 +90,5 @@ export const PREFERENCE_PERSISTENCE: PreferencePersistenceConfig = {
   navbar_style: "client-cookie",
   sidebar_variant: "client-cookie", // layout-critical → cannot be "localStorage"
   sidebar_collapsible: "client-cookie", // layout-critical → cannot be "localStorage"
+  active_dataset: "client-cookie", // cookie so the request proxy (rewrites) can read it
 };
