@@ -92,15 +92,28 @@ def parse_cnt_filename(filename: str) -> tuple[int, int]:
 # ---------------------------------------------------------------------------
 # Loading
 # ---------------------------------------------------------------------------
-def load_cnt_recording(filename: str) -> CntRecording:
-    """Load a SEED-V ``.cnt`` file and return a structured, trial-segmented recording.
+def load_raw_normalized(filename: str) -> tuple[mne.io.RawArray, int, int, tuple[str, ...]]:
+    """Read a SEED-V ``.cnt`` file, drop aux channels, and normalize channel order.
 
-    The ``filename`` may be a bare name (resolved under ``EEG_RAW_DIR``) or an
-    absolute path. The pipeline mirrors the official notebook: read with mne,
-    drop the 4 auxiliary channels (M1/M2/VEO/HEO), normalize to the canonical
-    62-channel order, and slice the continuous signal into the 15 trials defined
-    by ``trial_start_end_timestamp.txt`` for the recording's session. No
-    filtering is applied.
+    This is the low-level loader shared by :func:`load_cnt_recording` (which then
+    segments into trials without filtering) and :mod:`seed_v.preprocess` (which
+    re-references, filters, resamples, *then* segments — to avoid trial-boundary
+    artifacts).
+
+    Parameters
+    ----------
+    filename:
+        A bare ``.cnt`` name (resolved under ``EEG_RAW_DIR``) or an absolute path.
+
+    Returns
+    -------
+    raw:
+        An ``mne.io.RawArray`` (actually the mne-read ``RawCNT``) carrying the
+        62 EEG channels in canonical order, **preloaded** and **not filtered**.
+    subject, session:
+        1-based indices parsed from the filename.
+    ch_names:
+        The 62 canonical channel names in order.
     """
     # 1. Resolve path.
     path = Path(filename)
@@ -122,6 +135,20 @@ def load_cnt_recording(filename: str) -> CntRecording:
 
     # 5. Channel normalization to the canonical 62-name order.
     canonical = [ch.name for ch in load_channels()]
+    # Some .cnt files (e.g. subject 7 session 1 repaired) may be missing
+    # canonical EEG channels (e.g. FC4).  We insert zero-filled channels so the
+    # downstream pipeline still sees all 62 channels in canonical order.
+    raw_lower_set = {n.lower() for n in raw.ch_names}
+    canon_lower_set = {n.lower() for n in canonical}
+    missing_channels = [cn for cn in canonical if cn.lower() not in raw_lower_set]
+    if missing_channels:
+        zero_data = np.zeros((len(missing_channels), raw.n_times), dtype=np.float64)
+        info = mne.create_info(
+            missing_channels, raw.info["sfreq"], ch_types="eeg"
+        )
+        zero_raw = mne.io.RawArray(zero_data, info, verbose="WARNING")
+        raw.add_channels([zero_raw])
+    # Re-count after potential insertion.
     if len(raw.ch_names) != N_EEG_CHANNELS:
         raise ValueError(
             f"{path.name}: expected {N_EEG_CHANNELS} EEG channels after "
@@ -138,10 +165,33 @@ def load_cnt_recording(filename: str) -> CntRecording:
         )
     # Reorder to canonical order if the order differs (case-insensitive).
     if raw_lower != canon_lower:
+        # First, rename channels to match canonical case (e.g. FP1 -> Fp1).
         name_to_canonical = dict(zip(canon_lower, canonical))
-        raw.reorder([name_to_canonical[n] for n in raw_lower])
+        rename_map = {n: name_to_canonical[n.lower()] for n in raw.ch_names}
+        raw.rename_channels(rename_map)
+        # Now reorder to canonical order.
+        raw.reorder_channels(canonical)
 
     ch_names = tuple(canonical)
+    return raw, subject, session, ch_names
+
+
+def load_cnt_recording(filename: str) -> CntRecording:
+    """Load a SEED-V ``.cnt`` file and return a structured, trial-segmented recording.
+
+    The ``filename`` may be a bare name (resolved under ``EEG_RAW_DIR``) or an
+    absolute path. The pipeline mirrors the official notebook: read with mne,
+    drop the 4 auxiliary channels (M1/M2/VEO/HEO), normalize to the canonical
+    62-channel order, and slice the continuous signal into the 15 trials defined
+    by ``trial_start_end_timestamp.txt`` for the recording's session. No
+    filtering is applied.
+    """
+    # 1–5. Read, drop aux, normalize channels (shared with preprocess).
+    raw, subject, session, ch_names = load_raw_normalized(filename)
+    # Recover the resolved path for the filename field.
+    path = Path(filename)
+    if not path.is_absolute() and not path.parent.parts:
+        path = config.EEG_RAW_DIR / path
 
     # 6. Sanity-check sampling rate (mne's value is authoritative for slicing).
     sfreq = float(raw.info["sfreq"])
@@ -191,5 +241,6 @@ __all__ = [
     "CntRecording",
     "Trial",
     "load_cnt_recording",
+    "load_raw_normalized",
     "parse_cnt_filename",
 ]
